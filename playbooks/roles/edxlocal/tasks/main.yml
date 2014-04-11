@@ -13,65 +13,48 @@
 - name: install packages needed for single server
   apt: pkg={{','.join(edxlocal_debian_pkgs)}} install_recommends=yes state=present
 
-- name: setup the migration db user
-  mysql_user: >
-    name={{ EDXAPP_MYSQL_USER_MIGRATE }}
-    password={{ EDXAPP_MYSQL_PASSWORD_MIGRATE}}
-    priv='{{EDXAPP_MYSQL_DB_NAME}}.*:ALL'
-
-- name: setup the edxapp db user
-  mysql_user: >
-    name={{ EDXAPP_MYSQL_USER }}
-    password={{ EDXAPP_MYSQL_PASSWORD }}
-    priv='{{EDXAPP_MYSQL_DB_NAME}}.*:ALL'
-
 - name: create a database for edxapp
   mysql_db: >
-    db=edxapp
+    db={{ EDXAPP_MYSQL_DB_NAME }}
     state=present
     encoding=utf8
+    login_host={{ EDXAPP_MYSQL_HOST }}
+    login_port={{ EDXAPP_MYSQL_PORT }}
+    login_user={{ EDXAPP_MYSQL_USER }}
+    login_password={{ EDXAPP_MYSQL_PASSWORD }}
   when: EDXAPP_MYSQL_USER is defined
-    
-- name: setup the xqueue db user
-  mysql_user: >
-    name={{ XQUEUE_MYSQL_USER }}
-    password={{ XQUEUE_MYSQL_PASSWORD }}
-    priv='{{XQUEUE_MYSQL_DB_NAME}}.*:ALL'
-  when: XQUEUE_MYSQL_USER is defined and not disable_edx_services
 
 - name: create a database for xqueue
   mysql_db: >
-    db=xqueue
+    db={{ XQUEUE_MYSQL_DB_NAME }}
     state=present
     encoding=utf8
+    login_host={{ XQUEUE_MYSQL_HOST }}
+    login_port={{ XQUEUE_MYSQL_PORT }}
+    login_user={{ XQUEUE_MYSQL_USER }}
+    login_password={{ XQUEUE_MYSQL_PASSWORD }}
   when: XQUEUE_MYSQL_USER is defined and not disable_edx_services
-
-- name: setup the ora db user
-  mysql_user: >
-    name={{ ORA_MYSQL_USER }}
-    password={{ ORA_MYSQL_PASSWORD }}
-    priv='{{ORA_MYSQL_DB_NAME}}.*:ALL'
 
 - name: create a database for ora
   mysql_db: >
-    db=ora
+    db={{ ORA_MYSQL_DB_NAME }}
     state=present
     encoding=utf8
+    login_host={{ ORA_MYSQL_HOST }}
+    login_port={{ ORA_MYSQL_PORT }}
+    login_user={{ ORA_MYSQL_USER }}
+    login_password={{ ORA_MYSQL_PASSWORD }}
   when: ORA_MYSQL_USER is defined
-
-- name: setup the discern db user
-  mysql_user: >
-    name={{ DISCERN_MYSQL_USER }}
-    password={{ DISCERN_MYSQL_PASSWORD }}
-    priv='{{DISCERN_MYSQL_DB_NAME}}.*:ALL'
-  when: DISCERN_MYSQL_USER is defined and not disable_edx_services
-
 
 - name: create a database for discern
   mysql_db: >
-    db=discern
+    db={{ DISCERN_MYSQL_DB_NAME }}
     state=present
     encoding=utf8
+    login_host={{ DISCERN_MYSQL_HOST }}
+    login_port={{ DISCERN_MYSQL_PORT }}
+    login_user={{ DISCERN_MYSQL_USER }}
+    login_password={{ DISCERN_MYSQL_PASSWORD }}
   when: DISCERN_MYSQL_USER is defined and not disable_edx_services
 
 
