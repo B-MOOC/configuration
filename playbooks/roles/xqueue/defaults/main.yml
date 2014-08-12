@@ -2,6 +2,41 @@
 # when the role is included
 ---
 XQUEUE_NGINX_PORT: 18040
+XQUEUE_QUEUES:
+  # push queue
+  'edX-Open_DemoX': 'http://localhost:18050'
+  # pull queues
+  'test-pull': !!null
+  'certificates': !!null
+  'open-ended': !!null
+XQUEUE_LOGGING_ENV: sandbox
+XQUEUE_SYSLOG_SERVER: 'localhost'
+XQUEUE_S3_BUCKET : 'sandbox-bucket'
+XQUEUE_S3_PATH_PREFIX: 'sandbox-xqueue'
+XQUEUE_LOCAL_LOGLEVEL: 'INFO'
+XQUEUE_AWS_ACCESS_KEY_ID : ''
+XQUEUE_AWS_SECRET_ACCESS_KEY : ''
+XQUEUE_BASIC_AUTH_USER: "{{ COMMON_HTPASSWD_USER }}"
+XQUEUE_BASIC_AUTH_PASSWORD: "{{ COMMON_HTPASSWD_PASS }}"
+XQUEUE_DJANGO_USERS:
+  lms: 'password'
+XQUEUE_RABBITMQ_USER: 'edx'
+XQUEUE_RABBITMQ_PASS: 'edx'
+XQUEUE_RABBITMQ_HOSTNAME: 'localhost'
+XQUEUE_LANG: 'en_US.UTF-8'
+
+XQUEUE_MYSQL_DB_NAME: 'xqueue'
+XQUEUE_MYSQL_USER: 'xqueue001'
+XQUEUE_MYSQL_PASSWORD: 'password'
+XQUEUE_MYSQL_HOST: 'localhost'
+XQUEUE_MYSQL_PORT: '3306'
+XQUEUE_NEWRELIC_APPNAME: "{{ COMMON_ENVIRONMENT }}-{{ COMMON_DEPLOYMENT }}-xqueue"
+# Set the number of workers explicitely for xqueue
+XQUEUE_WORKERS: !!null
+XQUEUE_WORKERS_PER_QUEUE: 12
+
+# Internal vars below this line
+#############################################
 
 xqueue_app_dir: "{{ COMMON_APP_DIR }}/xqueue"
 xqueue_code_dir: "{{ xqueue_app_dir }}/xqueue"
@@ -17,38 +52,9 @@ xqueue_user: "xqueue"
 xqueue_gunicorn_port: 8040
 xqueue_gunicorn_host: 127.0.0.1
 
-XQUEUE_QUEUES:
-  # push queue
-  'edX-Open_DemoX': 'http://localhost:18050'
-  # pull queues
-  'test-pull': !!null
-  'certificates': !!null
-  'open-ended': !!null
-XQUEUE_LOGGING_ENV: sandbox
-XQUEUE_SYSLOG_SERVER: 'localhost'
-XQUEUE_S3_BUCKET : 'sandbox-bucket'
-XQUEUE_S3_PATH_PREFIX: 'sandbox-xqueue'
-XQUEUE_LOCAL_LOGLEVEL: 'INFO'
-XQUEUE_AWS_ACCESS_KEY_ID : ''
-XQUEUE_AWS_SECRET_ACCESS_KEY : ''
-XQUEUE_BASIC_AUTH_USER: 'edx'
-XQUEUE_BASIC_AUTH_PASSWORD: 'edx'
-XQUEUE_DJANGO_USERS:
-  lms: 'password'
-XQUEUE_RABBITMQ_USER: 'edx'
-XQUEUE_RABBITMQ_PASS: 'edx'
-XQUEUE_RABBITMQ_HOSTNAME: 'localhost'
-XQUEUE_LANG: 'en_US.UTF-8'
-
-XQUEUE_MYSQL_DB_NAME: 'xqueue'
-XQUEUE_MYSQL_USER: 'xqueue001'
-XQUEUE_MYSQL_PASSWORD: 'password'
-XQUEUE_MYSQL_HOST: 'localhost'
-XQUEUE_MYSQL_PORT: '3306'
-
 xqueue_env_config:
   XQUEUES: $XQUEUE_QUEUES
-  XQUEUE_WORKERS_PER_QUEUE: 12
+  XQUEUE_WORKERS_PER_QUEUE: $XQUEUE_WORKERS_PER_QUEUE
   LOGGING_ENV : $XQUEUE_LOGGING_ENV
   SYSLOG_SERVER: $XQUEUE_SYSLOG_SERVER
   LOG_DIR : "{{ COMMON_DATA_DIR }}/logs/xqueue"

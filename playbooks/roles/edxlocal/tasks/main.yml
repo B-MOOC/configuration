@@ -33,7 +33,7 @@
     login_port={{ XQUEUE_MYSQL_PORT }}
     login_user={{ XQUEUE_MYSQL_USER }}
     login_password={{ XQUEUE_MYSQL_PASSWORD }}
-  when: XQUEUE_MYSQL_USER is defined and not disable_edx_services
+  when: XQUEUE_MYSQL_USER is defined
 
 - name: create a database for ora
   mysql_db: >
@@ -46,16 +46,54 @@
     login_password={{ ORA_MYSQL_PASSWORD }}
   when: ORA_MYSQL_USER is defined
 
-- name: create a database for discern
+- name: create databases for analytics api
   mysql_db: >
-    db={{ DISCERN_MYSQL_DB_NAME }}
+    db={{ item }}
     state=present
     encoding=utf8
-    login_host={{ DISCERN_MYSQL_HOST }}
-    login_port={{ DISCERN_MYSQL_PORT }}
-    login_user={{ DISCERN_MYSQL_USER }}
-    login_password={{ DISCERN_MYSQL_PASSWORD }}
-  when: DISCERN_MYSQL_USER is defined and not disable_edx_services
+  when: ANALYTICS_API_CONFIG is defined
+  with_items:
+    - "{{ ANALYTICS_API_CONFIG['DATABASES']['default']['NAME'] }}"
+    - "{{ ANALYTICS_API_CONFIG['DATABASES']['reports']['NAME'] }}"
+
+
+- name: create api user for the analytics api
+  mysql_user: >
+    name=api001
+    password=password
+    priv='{{ ANALYTICS_API_CONFIG['DATABASES']['default']['NAME'] }}.*:ALL/reports.*:SELECT'
+  when: ANALYTICS_API_CONFIG is defined
+
+- name: create read-only reports user for the analytics-api
+  mysql_user: >
+    name=reports001
+    password=password
+    priv='{{ ANALYTICS_API_CONFIG['DATABASES']['reports']['NAME'] }}.*:SELECT'
+  when: ANALYTICS_API_CONFIG is defined
+
+- name: setup the migration db user
+  mysql_user: >
+    name={{ COMMON_MYSQL_MIGRATE_USER }}
+    password={{ COMMON_MYSQL_MIGRATE_PASS }}
+    priv='{{ item }}.*:ALL'
+    append_privs=yes
+  when: item != 'None'
+  with_items:
+    - "{{ EDXAPP_MYSQL_DB_NAME|default('None') }}"
+    - "{{ XQUEUE_MYSQL_DB_NAME|default('None') }}"
+    - "{{ ORA_MYSQL_DB_NAME|default('None') }}"
+
+- name: setup the read-only db user
+  mysql_user: >
+    name={{ COMMON_MYSQL_READ_ONLY_USER }}
+    password={{ COMMON_MYSQL_READ_ONLY_PASS }}
+    priv='*.*:ALL'
+
+- name: setup the admin db user
+  mysql_user: >
+    name={{ COMMON_MYSQL_ADMIN_USER }}
+    password={{ COMMON_MYSQL_ADMIN_PASS }}
+    priv='*.*:CREATE USER'
 
 
 - name: install memcached

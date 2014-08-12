@@ -27,7 +27,6 @@ mkdir -p $BUILD_ID/jobs
 # Copy global configuration files into the workspace
 cp $JENKINS_HOME/*.xml $BUILD_ID/
 # Copy keys and secrets into the workspace
-cp $JENKINS_HOME/identity.key $BUILD_ID/
 cp $JENKINS_HOME/secret.key $BUILD_ID/
 cp $JENKINS_HOME/secret.key.not-so-secret $BUILD_ID/
 cp -r $JENKINS_HOME/secrets $BUILD_ID/
@@ -44,7 +43,7 @@ rm -rf $BUILD_ID
   </builders>
   <publishers>
     <hudson.plugins.s3.S3BucketPublisher plugin="s3@0.5">
-      <profileName>{{JENKINS_ADMIN_S3_PROFILE.name}}</profileName>
+      <profileName>{{ JENKINS_ADMIN_S3_PROFILE.name }}</profileName>
       <entries>
         <hudson.plugins.s3.Entry>
           <bucket>edx-jenkins-backups/{{JENKINS_ADMIN_NAME}}</bucket>

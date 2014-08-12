@@ -1,12 +1,7 @@
-# Configure an admin instance with jenkins and asgard.
+# Configure an instance with the admin jenkins.
 - name: Configure instance(s)
   hosts: all
   sudo: True
   gather_facts: True
   roles:
-  - aws
-  - edx_ansible
-  - user
-  - jenkins_admin
-  - hotg
-  - newrelic
+    - jenkins_admin

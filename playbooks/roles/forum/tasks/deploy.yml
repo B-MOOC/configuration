@@ -30,8 +30,11 @@
   notify: restart the forum service
 
 - name:  git checkout forum repo into {{ forum_code_dir }}
-  git: dest={{ forum_code_dir }} repo={{ forum_source_repo }} version={{ forum_version }}
+  git: >
+    dest={{ forum_code_dir }} repo={{ forum_source_repo }} version={{ forum_version }}
+    accept_hostkey=yes
   sudo_user: "{{ forum_user }}"
+  register: forum_checkout
   notify: restart the forum service
 
 # TODO: This is done as the common_web_user
@@ -51,7 +54,7 @@
 - name: update supervisor configuration
   shell:  "{{ supervisor_ctl }} -c {{ supervisor_cfg }} update"
   register: supervisor_update
-  changed_when: supervisor_update.stdout != ""
+  changed_when: supervisor_update.stdout is defined and supervisor_update.stdout != ""
   when: not disable_edx_services
 
 - name: ensure forum is started
@@ -63,5 +66,8 @@
   when: not disable_edx_services
 
 - include: test.yml tags=deploy
+
+- include: tag_ec2.yml tags=deploy
+  when: COMMON_TAG_EC2_INSTANCE
 
 - set_fact: forum_installed=true
