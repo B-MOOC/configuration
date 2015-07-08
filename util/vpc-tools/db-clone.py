@@ -72,6 +72,8 @@ def parse_args(args=sys.argv[1:]):
                         help="create a sql dump after launching it into the vpc")
     parser.add_argument('-s', '--secret-var-files', action="append", required=True,
                         help="use one or more secret var files to run ansible against the host to update db users")
+    parser.add_argument('-o', '--dest-option-group', default="default:mysql-5-6",
+                        help="the option group for the new rds.")
 
     return parser.parse_args(args)
 
@@ -103,6 +105,7 @@ if __name__ == '__main__':
         target_db_instance_identifier=restore_dbid,
         use_latest_restorable_time=True,
         db_instance_class=args.type,
+        option_group_name=args.dest_option_group,
     )
     if args.vpc:
         restore_args['db_subnet_group_name'] = args.subnet
@@ -131,6 +134,8 @@ if __name__ == '__main__':
     print("Waiting 15 seconds before checking to see if db is available")
     time.sleep(15)
     wait_on_db_status(restore_dbid)
+    print("Waiting another 15 seconds")
+    time.sleep(15)
     if args.clean_wwc:
         # Run the mysql clean sql file
         sanitize_cmd = """mysql -u root -p{root_pass} -h{db_host} wwc < {sanitize_wwc_sql_file} """.format(
@@ -154,9 +159,11 @@ if __name__ == '__main__':
         for secret_var_file in args.secret_var_files:
             extra_args += " -e@{}".format(secret_var_file)
 
-        db_cmd = """cd {play_path} && ansible-playbook -c local -i 127.0.0.1, update_edxapp_db_users.yml """ \
-            """{extra_args} -e "edxapp_db_root_user=root edxapp_db_root_pass={root_pass} """ \
-            """EDXAPP_MYSQL_HOST={db_host}" """.format(
+        db_cmd = """cd {play_path} && ansible-playbook -c local -i 127.0.0.1, create_dbs.yml """ \
+            """{extra_args} -e "edxapp_db_root_user=root xqueue_db_root_user=root" """ \
+            """ -e "db_root_pass={root_pass}" """ \
+            """ -e "EDXAPP_MYSQL_HOST={db_host}" """ \
+            """ -e "XQUEUE_MYSQL_HOST={db_host}" """.format(
             root_pass=args.password,
             extra_args=extra_args,
             db_host=db_host,

@@ -1,9 +1,9 @@
 #include <tunables/global>
 
-{{ xqwatcher_venv_base }}/{{ item.QUEUE_CONFIG.HANDLERS[0].CODEJAIL.name }}/bin/python {
+{{ xqwatcher_app_dir }}/venvs/{{ item.QUEUE_CONFIG.HANDLERS[0].CODEJAIL.name }}/bin/python {
     #include <abstractions/base>
 
-    {{ xqwatcher_venv_base }}/{{ item.QUEUE_CONFIG.HANDLERS[0].CODEJAIL.name }}/** mr,
+    {{ xqwatcher_app_dir }}/venvs/{{ item.QUEUE_CONFIG.HANDLERS[0].CODEJAIL.name }}/** mr,
     #todo need a way of providing.
     # edxapp_code_dir /common/lib/sandbox-packages/** r,
     /tmp/codejail-*/ rix,
@@ -21,7 +21,7 @@
     /usr/lib/python2.7/lib-dynload/datetime.so mr,
     /usr/lib/python2.7/lib-dynload/_elementtree.so mr,
     /usr/lib/python2.7/lib-dynload/pyexpat.so mr,
-
+    /usr/lib/python2.7/lib-dynload/future_builtins.so mr,
     #
     # Allow access to selections from /proc
     #

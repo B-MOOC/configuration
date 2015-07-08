@@ -7,13 +7,11 @@
     openid_workaround: true
     devstack: true
     disable_edx_services: true
-    edx_platform_version: 'master'
     mongo_enable_journal: false
     EDXAPP_NO_PREREQ_INSTALL: 0
     COMMON_MOTD_TEMPLATE: 'devstack_motd.tail.j2'
     COMMON_SSH_PASSWORD_AUTH: "yes"
-  vars_files:
-    - "group_vars/all"
+    ENABLE_LEGACY_ORA: !!null
   roles:
     - edx_ansible
     - edxlocal
@@ -22,9 +20,13 @@
     - oraclejdk
     - elasticsearch
     - forum
-    - ora
+    - role: notifier
+      NOTIFIER_DIGEST_TASK_INTERVAL: "5"
+    - role: ora
+      when: ENABLE_LEGACY_ORA
     - browsers
+    - browsermob-proxy
     - local_dev
     - demo
-    - role: analytics-api
+    - role: analytics_api
       when: ANALYTICS_API_GIT_IDENTITY

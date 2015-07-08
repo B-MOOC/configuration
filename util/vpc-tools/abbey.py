@@ -5,6 +5,7 @@ import time
 import json
 import yaml
 import os
+import requests
 try:
     import boto.ec2
     import boto.sqs
@@ -18,7 +19,7 @@ except ImportError:
 
 from pprint import pprint
 
-AMI_TIMEOUT = 1800  # time to wait for AMIs to complete(30 minutes)
+AMI_TIMEOUT = 2700  # time to wait for AMIs to complete(45 minutes)
 EC2_RUN_TIMEOUT = 180  # time to wait for ec2 state transition
 EC2_STATUS_TIMEOUT = 300  # time to wait for ec2 system status checks
 NUM_TASKS = 5  # number of tasks for time summary report
@@ -117,9 +118,16 @@ def parse_args():
                         default=None,
                         help="The API ID of the Hipchat room to post"
                              "status messages to")
+    parser.add_argument("--ansible-hipchat-room-id", required=False,
+                        default='Hammer',
+                        help="The room used by the abbey instance for "
+                             "printing verbose ansible run data.")
     parser.add_argument("--hipchat-api-token", required=False,
                         default=None,
                         help="The API token for Hipchat integration")
+    parser.add_argument("--callback-url", required=False,
+                        default=None,
+                        help="The callback URL to send notifications to")
     parser.add_argument("--root-vol-size", required=False,
                         default=50,
                         help="The size of the root volume to use for the "
@@ -134,7 +142,6 @@ def parse_args():
                        default=False)
 
     return parser.parse_args()
-
 
 def get_instance_sec_group(vpc_id):
 
@@ -183,6 +190,19 @@ def create_instance_args():
             'tag:aws:cloudformation:stack-name': stack_name,
             'tag:play': args.play}
     )
+
+    if len(subnet) < 1:
+        #
+        # try scheme for non-cloudformation builds
+        #
+
+        subnet = vpc.get_all_subnets(
+            filters={
+                'tag:cluster': args.play,
+                'tag:environment': args.environment,
+                'tag:deployment': args.deployment}
+        )
+
     if len(subnet) < 1:
         sys.stderr.write("ERROR: Expected at least one subnet, got {}\n".format(
             len(subnet)))
@@ -218,7 +238,7 @@ config_secure={config_secure}
 git_repo_name="configuration"
 git_repo="https://github.com/edx/$git_repo_name"
 git_repo_secure="{configuration_secure_repo}"
-git_repo_secure_name="{configuration_secure_repo_basename}"
+git_repo_secure_name=$(basename $git_repo_secure .git)
 git_repo_private="{configuration_private_repo}"
 git_repo_private_name=$(basename $git_repo_private .git)
 secure_vars_file={secure_vars_file}
@@ -321,6 +341,7 @@ fi
 
 
 cd $base_dir/$git_repo_name
+sudo pip install -r pre-requirements.txt
 sudo pip install -r requirements.txt
 
 cd $playbook_dir
@@ -346,12 +367,10 @@ rm -rf $base_dir
 
     """.format(
                 hipchat_token=args.hipchat_api_token,
-                hipchat_room=args.hipchat_room_id,
+                hipchat_room=args.ansible_hipchat_room_id,
                 configuration_version=args.configuration_version,
                 configuration_secure_version=args.configuration_secure_version,
                 configuration_secure_repo=args.configuration_secure_repo,
-                configuration_secure_repo_basename=os.path.basename(
-                    args.configuration_secure_repo),
                 configuration_private_version=args.configuration_private_version,
                 configuration_private_repo=args.configuration_private_repo,
                 environment=args.environment,
@@ -366,7 +385,8 @@ rm -rf $base_dir
                 cache_id=args.cache_id)
 
     mapping = BlockDeviceMapping()
-    root_vol = BlockDeviceType(size=args.root_vol_size)
+    root_vol = BlockDeviceType(size=args.root_vol_size,
+                               volume_type='gp2')
     mapping['/dev/sda1'] = root_vol
 
     ec2_args = {
@@ -578,7 +598,16 @@ def launch_and_configure(ec2_args):
         "Waiting for instance {} to reach running status:".format(instance_id)),
     status_start = time.time()
     for _ in xrange(EC2_RUN_TIMEOUT):
-        res = ec2.get_all_instances(instance_ids=[instance_id])
+        try:
+            res = ec2.get_all_instances(instance_ids=[instance_id])
+        except EC2ResponseError as e:
+            if e.code == "InvalidInstanceID.NotFound":
+                print("Instance not found({}), will try again.".format(
+                    instance_id))
+                time.sleep(1)
+                continue
+            else:
+                raise(e)
         if res[0].instances[0].state == 'running':
             status_delta = time.time() - status_start
             run_summary.append(('EC2 Launch', status_delta))
@@ -643,6 +672,9 @@ def launch_and_configure(ec2_args):
 
 def send_hipchat_message(message):
     print(message)
+    if args.callback_url:
+        r=requests.get("{}/{}".format(args.callback_url, message))
+
     #If hipchat is configured send the details to the specified room
     if args.hipchat_api_token and args.hipchat_room_id:
         import hipchat

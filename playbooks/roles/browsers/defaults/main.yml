@@ -13,10 +13,15 @@ browser_deb_pkgs:
 # which often causes spurious acceptance test failures.
 browser_s3_deb_pkgs:
     - { name: "google-chrome-stable_30.0.1599.114-1_amd64.deb", url: "https://s3.amazonaws.com/vagrant.testeng.edx.org/google-chrome-stable_30.0.1599.114-1_amd64.deb" }
-    - { name: "firefox_25.0+build3-0ubuntu0.12.04.1_amd64.deb", url: "https://s3.amazonaws.com/vagrant.testeng.edx.org/firefox_25.0%2Bbuild3-0ubuntu0.12.04.1_amd64.deb" }
+    - { name: "firefox_28.0+build2-0ubuntu0.12.04.1_amd64.deb", url: "https://s3.amazonaws.com/vagrant.testeng.edx.org/firefox_28.0%2Bbuild2-0ubuntu0.12.04.1_amd64.deb" }
 
 # Chrome and ChromeDriver
 chromedriver_version: 2.6
 chromedriver_url: "http://chromedriver.storage.googleapis.com/{{ chromedriver_version }}/chromedriver_linux64.zip"
+
+# PhantomJS
+phantomjs_version: "phantomjs-1.9.8-linux-x86_64"
+phantomjs_tarfile: "{{ phantomjs_version }}.tar.bz2"
+phantomjs_url: "https://bitbucket.org/ariya/phantomjs/downloads/{{ phantomjs_tarfile }}"
 
 browser_xvfb_display: ":1"

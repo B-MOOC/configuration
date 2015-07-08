@@ -1,4 +1,8 @@
 ---
+- name: Update CA Certificates
+  shell: >
+    /usr/sbin/update-ca-certificates
+
 - name: Add user www-data
   # This is the default user for nginx
   user: >
@@ -20,10 +24,6 @@
 - name: check if instance is vagrant
   stat: path=/home/vagrant
   register: vagrant_home_dir
-
-# Need to install python-pycurl to use Ansible's apt_repository module
-- name: Install python-pycurl
-  apt: pkg=python-pycurl state=present update_cache=yes
 
 # Ensure that we get a current version of Git
 # GitHub requires version 1.7.10 or later
@@ -60,6 +60,12 @@
     owner=root group=root mode=644
   notify: restart rsyslogd
 
+- name: Remove the default rsyslog configuration
+  file:
+    path=/etc/rsyslog.d/50-default.conf
+    state=absent
+  notify: restart rsyslogd
+
   # This is in common to keep all logrotation config
   # in the same role
 - name: Create hourly subdirectory in logrotate.d
@@ -85,37 +91,22 @@
 
 - name: update /etc/hosts
   template: src=hosts.j2 dest=/etc/hosts
-  when: COMMON_HOSTNAME
+  when: COMMON_HOSTNAME|length > 0
   register: etc_hosts
 
 - name: update /etc/hostname
   template: src=hostname.j2 dest=/etc/hostname
-  when: COMMON_HOSTNAME
+  when: COMMON_HOSTNAME|length > 0
   register: etc_hostname
 
 - name: run hostname
   shell: >
     hostname -F /etc/hostname
-  when: COMMON_HOSTNAME and (etc_hosts.changed or etc_hostname.changed)
+  when: COMMON_HOSTNAME|length >0 and (etc_hosts.changed or etc_hostname.changed)
 
 - name: update /etc/dhcp/dhclient.conf
   template: src=etc/dhcp/dhclient.conf.j2 dest=/etc/dhcp/dhclient.conf
   when: COMMON_CUSTOM_DHCLIENT_CONFIG
-
-  # Remove some of the default motd display on ubuntu
-  # and add a custom motd.  These do not require an
-  # ssh restart
-  # Only needed for EC2 instances.
-- name: update the ssh motd on Ubuntu
-  file: >
-    mode=0644
-    path={{ item }}
-  when: vagrant_home_dir.stat.exists == false
-  with_items:
-  - "/etc/update-motd.d/10-help-text"
-  - "/usr/share/landscape/landscape-sysinfo.wrapper"
-  - "/etc/update-motd.d/51-cloudguest"
-  - "/etc/update-motd.d/91-release-upgrade"
 
 - name: add ssh-warning banner motd
   template: >
@@ -127,3 +118,4 @@
     dest=/etc/ssh/sshd_config
     src=sshd_config.j2 mode=0644 owner=root group=root
   notify: restart ssh
+  

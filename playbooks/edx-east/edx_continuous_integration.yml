@@ -12,11 +12,10 @@
       nginx_sites:
       - cms
       - lms
-      - ora
       - xqueue
       - xserver
       - certs
-      - analytics-api
+      - analytics_api
       nginx_default_sites:
       - lms
     - role: edxlocal
@@ -24,18 +23,18 @@
     - mongo
     - { role: 'edxapp', celery_worker: True }
     - edxapp
-    - role: demo
-      tags: demo
+    - testcourses
     - { role: 'rabbitmq', rabbitmq_ip: '127.0.0.1' }
     - oraclejdk
     - elasticsearch
     - forum
+    - { role: notifier, NOTIFIER_DIGEST_TASK_INTERVAL: "5" }
     - { role: "xqueue", update_users: True }
-    - xserver
-    - ora
+    - role: xserver
+      when: XSERVER_GIT_IDENTITY|length > 0
     - certs
     - edx_ansible
-    - analytics-api
+    - analytics_api
     - role: datadog
       when: COMMON_ENABLE_DATADOG
     - role: splunkforwarder
