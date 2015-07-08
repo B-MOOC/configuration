@@ -177,12 +177,18 @@
     - "{{ XQUEUE_MYSQL_DB_NAME|default('None') }}"
     - "{{ ORA_MYSQL_DB_NAME|default('None') }}"
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> upstream/master
     - "{{ EDX_NOTES_API_MYSQL_DB_NAME|default('None') }}"
     - "{{ ANALYTICS_API_DEFAULT_DB_NAME|default('None') }}"
     - "{{ ANALYTICS_API_REPORTS_DB_NAME|default('None') }}"
     - "{{ INSIGHTS_DATABASE_NAME|default('None') }}"
     - "{{ ECOMMERCE_DEFAULT_DB_NAME|default('None') }}"
+<<<<<<< HEAD
+>>>>>>> upstream/master
+=======
 >>>>>>> upstream/master
 
 - name: setup the read-only db user
